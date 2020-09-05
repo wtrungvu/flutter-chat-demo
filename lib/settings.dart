@@ -10,25 +10,25 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Settings extends StatelessWidget {
+class ChatSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      appBar: new AppBar(
-        title: new Text(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
           'SETTINGS',
           style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: new SettingsScreen(),
+      body: SettingsScreen(),
     );
   }
 }
 
 class SettingsScreen extends StatefulWidget {
   @override
-  State createState() => new SettingsScreenState();
+  State createState() => SettingsScreenState();
 }
 
 class SettingsScreenState extends State<SettingsScreen> {
@@ -45,8 +45,8 @@ class SettingsScreenState extends State<SettingsScreen> {
   bool isLoading = false;
   File avatarImageFile;
 
-  final FocusNode focusNodeNickname = new FocusNode();
-  final FocusNode focusNodeAboutMe = new FocusNode();
+  final FocusNode focusNodeNickname = FocusNode();
+  final FocusNode focusNodeAboutMe = FocusNode();
 
   @override
   void initState() {
@@ -61,15 +61,20 @@ class SettingsScreenState extends State<SettingsScreen> {
     aboutMe = prefs.getString('aboutMe') ?? '';
     photoUrl = prefs.getString('photoUrl') ?? '';
 
-    controllerNickname = new TextEditingController(text: nickname);
-    controllerAboutMe = new TextEditingController(text: aboutMe);
+    controllerNickname = TextEditingController(text: nickname);
+    controllerAboutMe = TextEditingController(text: aboutMe);
 
     // Force refresh input
     setState(() {});
   }
 
   Future getImage() async {
-    File image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    ImagePicker imagePicker = ImagePicker();
+    PickedFile pickedFile;
+
+    pickedFile = await imagePicker.getImage(source: ImageSource.gallery);
+
+    File image = File(pickedFile.path);
 
     if (image != null) {
       setState(() {
@@ -90,10 +95,11 @@ class SettingsScreenState extends State<SettingsScreen> {
         storageTaskSnapshot = value;
         storageTaskSnapshot.ref.getDownloadURL().then((downloadUrl) {
           photoUrl = downloadUrl;
-          Firestore.instance
-              .collection('users')
-              .document(id)
-              .updateData({'nickname': nickname, 'aboutMe': aboutMe, 'photoUrl': photoUrl}).then((data) async {
+          FirebaseFirestore.instance.collection('users').doc(id).update({
+            'nickname': nickname,
+            'aboutMe': aboutMe,
+            'photoUrl': photoUrl
+          }).then((data) async {
             await prefs.setString('photoUrl', photoUrl);
             setState(() {
               isLoading = false;
@@ -133,10 +139,11 @@ class SettingsScreenState extends State<SettingsScreen> {
       isLoading = true;
     });
 
-    Firestore.instance
-        .collection('users')
-        .document(id)
-        .updateData({'nickname': nickname, 'aboutMe': aboutMe, 'photoUrl': photoUrl}).then((data) async {
+    FirebaseFirestore.instance.collection('users').doc(id).update({
+      'nickname': nickname,
+      'aboutMe': aboutMe,
+      'photoUrl': photoUrl
+    }).then((data) async {
       await prefs.setString('nickname', nickname);
       await prefs.setString('aboutMe', aboutMe);
       await prefs.setString('photoUrl', photoUrl);
@@ -172,20 +179,23 @@ class SettingsScreenState extends State<SettingsScreen> {
                               ? Material(
                                   child: CachedNetworkImage(
                                     placeholder: (context, url) => Container(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.0,
-                                            valueColor: AlwaysStoppedAnimation<Color>(themeColor),
-                                          ),
-                                          width: 90.0,
-                                          height: 90.0,
-                                          padding: EdgeInsets.all(20.0),
-                                        ),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.0,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                themeColor),
+                                      ),
+                                      width: 90.0,
+                                      height: 90.0,
+                                      padding: EdgeInsets.all(20.0),
+                                    ),
                                     imageUrl: photoUrl,
                                     width: 90.0,
                                     height: 90.0,
                                     fit: BoxFit.cover,
                                   ),
-                                  borderRadius: BorderRadius.all(Radius.circular(45.0)),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(45.0)),
                                   clipBehavior: Clip.hardEdge,
                                 )
                               : Icon(
@@ -200,7 +210,8 @@ class SettingsScreenState extends State<SettingsScreen> {
                                 height: 90.0,
                                 fit: BoxFit.cover,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(45.0)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(45.0)),
                               clipBehavior: Clip.hardEdge,
                             ),
                       IconButton(
@@ -228,17 +239,21 @@ class SettingsScreenState extends State<SettingsScreen> {
                   Container(
                     child: Text(
                       'Nickname',
-                      style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: primaryColor),
+                      style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor),
                     ),
                     margin: EdgeInsets.only(left: 10.0, bottom: 5.0, top: 10.0),
                   ),
                   Container(
                     child: Theme(
-                      data: Theme.of(context).copyWith(primaryColor: primaryColor),
+                      data: Theme.of(context)
+                          .copyWith(primaryColor: primaryColor),
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Sweetie',
-                          contentPadding: new EdgeInsets.all(5.0),
+                          contentPadding: EdgeInsets.all(5.0),
                           hintStyle: TextStyle(color: greyColor),
                         ),
                         controller: controllerNickname,
@@ -255,13 +270,17 @@ class SettingsScreenState extends State<SettingsScreen> {
                   Container(
                     child: Text(
                       'About me',
-                      style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: primaryColor),
+                      style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor),
                     ),
                     margin: EdgeInsets.only(left: 10.0, top: 30.0, bottom: 5.0),
                   ),
                   Container(
                     child: Theme(
-                      data: Theme.of(context).copyWith(primaryColor: primaryColor),
+                      data: Theme.of(context)
+                          .copyWith(primaryColor: primaryColor),
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Fun, like travel and play PES...',
@@ -290,7 +309,7 @@ class SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontSize: 16.0),
                   ),
                   color: primaryColor,
-                  highlightColor: new Color(0xff8d93a0),
+                  highlightColor: Color(0xff8d93a0),
                   splashColor: Colors.transparent,
                   textColor: Colors.white,
                   padding: EdgeInsets.fromLTRB(30.0, 10.0, 30.0, 10.0),
@@ -307,7 +326,8 @@ class SettingsScreenState extends State<SettingsScreen> {
           child: isLoading
               ? Container(
                   child: Center(
-                    child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(themeColor)),
+                    child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(themeColor)),
                   ),
                   color: Colors.white.withOpacity(0.8),
                 )
